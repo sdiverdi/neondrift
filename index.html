@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Drift</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308111f'/%3E%3Cpath d='M32 10 51 52 32 43 13 52Z' fill='%239cff57'/%3E%3Ccircle cx='32' cy='29' r='5' fill='white'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="layout">
+    <section class="hero">
+      <p class="eyebrow">Arcade Geometry</p>
+      <h1>Neon Drift</h1>
+      <p class="subtitle">
+        Survive the swarm, carve through hostile shapes, and keep your combo alive.
+      </p>
+      <div class="controls">
+        <span>Move: WASD / Arrows</span>
+        <span>Dash: Shift</span>
+        <span>Pulse: Space</span>
+        <span>Beam: Q / X</span>
+        <span>Burst: E / Y</span>
+        <span>Controller: Left Stick, A, B</span>
+      </div>
+    </section>
+
+    <section class="game-panel">
+      <div class="hud" aria-live="polite">
+        <div>
+          <span class="hud-label">Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span class="hud-label">Combo</span>
+          <strong id="combo">x1</strong>
+        </div>
+        <div>
+          <span class="hud-label">Health</span>
+          <strong id="health">5</strong>
+        </div>
+        <div>
+          <span class="hud-label">Zone</span>
+          <strong id="zone">Core</strong>
+        </div>
+        <div>
+          <span class="hud-label">Wave</span>
+          <strong id="wave">1</strong>
+        </div>
+        <div>
+          <span class="hud-label">Relays</span>
+          <strong id="objectives">0/4</strong>
+        </div>
+        <div>
+          <span class="hud-label">Powers</span>
+          <strong id="powers">Base</strong>
+        </div>
+        <button id="restart" type="button">Restart</button>
+        <button id="fullscreen" type="button">Fullscreen</button>
+      </div>
+      <div class="arena">
+        <canvas id="game" width="960" height="600" aria-label="Geometry action game"></canvas>
+        <aside class="minimap-shell" aria-label="Minimap overlay">
+          <div class="minimap-header">
+            <span>Sector Map</span>
+            <strong id="wave-zone">Core</strong>
+          </div>
+          <canvas id="minimap" width="180" height="180" aria-label="World minimap"></canvas>
+        </aside>
+        <div id="run-overlay" class="run-overlay">
+          <div class="overlay-card">
+            <p id="overlay-eyebrow" class="overlay-eyebrow">Arcade Geometry</p>
+            <h2 id="overlay-title">Neon Drift</h2>
+            <p id="overlay-copy" class="overlay-copy">
+              Launch when ready. Capture the landmark relays and hold the sectors through incoming waves.
+            </p>
+            <div class="overlay-stats">
+              <div>
+                <span id="summary-1-label">Relays</span>
+                <strong id="summary-1-value">4</strong>
+              </div>
+              <div>
+                <span id="summary-2-label">Sectors</span>
+                <strong id="summary-2-value">4</strong>
+              </div>
+              <div>
+                <span id="summary-3-label">Arena</span>
+                <strong id="summary-3-value">3x</strong>
+              </div>
+              <div>
+                <span id="summary-4-label">Mode</span>
+                <strong id="summary-4-value">Arcade</strong>
+              </div>
+            </div>
+            <button id="overlay-action" type="button">Start Run</button>
+          </div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <span id="message">Press Space to unleash a shock pulse.</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="./game.js" defer></script>
+</body>
+</html>

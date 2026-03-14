@@ -1,0 +1,5 @@
+[   14203ms] TypeError: Cannot read properties of undefined (reading 'index')
+    at http://127.0.0.1:8123/game.js:676:38
+    at eval (eval at evaluate (:301:30), <anonymous>:17:12)
+    at UtilityScript.evaluate (<anonymous>:303:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
