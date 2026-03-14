@@ -94,16 +94,19 @@ const player = {
   burstCooldown: 0,
   hitTimer: 0,
   powers: {
+    pulse: false,
     beam: false,
     burst: false,
     drones: false,
   },
   powerLevels: {
+    pulse: 0,
     beam: 0,
     burst: 0,
     drones: 0,
   },
   powerBranches: {
+    pulse: { surge: 0, static: 0 },
     beam: { focus: 0, lattice: 0 },
     burst: { seeker: 0, nova: 0 },
     drones: { orbit: 0, forge: 0 },
@@ -119,6 +122,15 @@ const projectiles = [];
 const beamEffects = [];
 
 const powerDefinitions = {
+  pulse: {
+    label: "Shock Pulse",
+    shortLabel: "Pulse",
+    color: "#74f5ff",
+    branches: {
+      surge: "Surge",
+      static: "Static",
+    },
+  },
   beam: {
     label: "Prism Lance",
     shortLabel: "Lance",
@@ -213,7 +225,7 @@ function handlePrimaryAction() {
 }
 
 function getPulseRadius() {
-  return 170 + world.objectivesCollected * 14;
+  return getPulseStats().radius;
 }
 
 function getUnlockedPowers() {
@@ -229,6 +241,16 @@ function getPowerSummary() {
 
 function getPowerStat(key, branch) {
   return player.powerBranches[key][branch] || 0;
+}
+
+function getPulseStats() {
+  return {
+    damage: 2 + Math.floor(player.powerLevels.pulse / 2) + getPowerStat("pulse", "static"),
+    radius: 170 + world.objectivesCollected * 14 + player.powerLevels.pulse * 10 + getPowerStat("pulse", "surge") * 18,
+    cooldown: Math.max(0.55, 1.35 - getPowerStat("pulse", "surge") * 0.05),
+    force: 200 + player.powerLevels.pulse * 14 + getPowerStat("pulse", "surge") * 18,
+    staticArcs: getPowerStat("pulse", "static"),
+  };
 }
 
 function getBeamStats() {
@@ -862,12 +884,16 @@ function resetGame(phase = "start") {
   player.burstCooldown = 0;
   player.hitTimer = 0;
   player.angle = -Math.PI / 2;
+  player.powers.pulse = false;
   player.powers.beam = false;
   player.powers.burst = false;
   player.powers.drones = false;
+  player.powerLevels.pulse = 0;
   player.powerLevels.beam = 0;
   player.powerLevels.burst = 0;
   player.powerLevels.drones = 0;
+  player.powerBranches.pulse.surge = 0;
+  player.powerBranches.pulse.static = 0;
   player.powerBranches.beam.focus = 0;
   player.powerBranches.beam.lattice = 0;
   player.powerBranches.burst.seeker = 0;
@@ -1016,11 +1042,12 @@ function triggerPulse() {
     return;
   }
 
-  player.pulseCooldown = 1.35;
+  const pulseStats = getPulseStats();
+  player.pulseCooldown = pulseStats.cooldown;
   world.flash = 0.18;
   setMessage("Shock pulse released.");
-  createBurst(player.x, player.y, "#74f5ff", 22, 260);
-  const pulseRadius = getPulseRadius();
+  createBurst(player.x, player.y, powerDefinitions.pulse.color, 22 + player.powerLevels.pulse * 2, 260 + player.powerLevels.pulse * 12);
+  const pulseRadius = pulseStats.radius;
 
   for (let index = enemies.length - 1; index >= 0; index -= 1) {
     const enemy = enemies[index];
@@ -1029,10 +1056,22 @@ function triggerPulse() {
     const distance = Math.hypot(dx, dy);
 
     if (distance < pulseRadius) {
-      enemy.hp -= 2;
+      enemy.hp -= pulseStats.damage;
       enemy.hitFlash = 0.18;
-      enemy.vx += (dx / Math.max(distance, 1)) * 200;
-      enemy.vy += (dy / Math.max(distance, 1)) * 200;
+      enemy.vx += (dx / Math.max(distance, 1)) * pulseStats.force;
+      enemy.vy += (dy / Math.max(distance, 1)) * pulseStats.force;
+
+      if (pulseStats.staticArcs > 0) {
+        beamEffects.push({
+          x: player.x,
+          y: player.y,
+          angle: Math.atan2(dy, dx),
+          length: Math.min(distance, pulseRadius),
+          life: 0.08,
+          color: powerDefinitions.pulse.color,
+          width: 3 + pulseStats.staticArcs,
+        });
+      }
 
       if (enemy.hp <= 0) {
         destroyEnemy(index);
@@ -1511,11 +1550,13 @@ function drawPlayer() {
     }
   }
 
-  if (player.pulseCooldown > 1.15) {
-    const radius = getPulseRadius() * (1.35 - player.pulseCooldown);
+  if (player.pulseCooldown > 0) {
+    const pulseStats = getPulseStats();
+    const cooldownProgress = 1 - Math.min(1, player.pulseCooldown / pulseStats.cooldown);
+    const radius = Math.max(18, getPulseRadius() * cooldownProgress);
     context.save();
-    context.strokeStyle = "rgba(116, 245, 255, 0.5)";
-    context.lineWidth = 3;
+    context.strokeStyle = `${powerDefinitions.pulse.color}${player.powerLevels.pulse > 0 ? "bb" : "80"}`;
+    context.lineWidth = 3 + Math.min(3, getPowerStat("pulse", "static") * 0.4);
     context.beginPath();
     context.arc(player.x - camera.x, player.y - camera.y, radius, 0, Math.PI * 2);
     context.stroke();
@@ -1633,7 +1674,7 @@ function drawBeamEffects() {
 
 function drawCooldownBars() {
   const cooldowns = [
-    { label: "Pulse", ready: player.pulseCooldown <= 0, progress: 1 - Math.min(1, player.pulseCooldown / 1.35), color: "#74f5ff" },
+    { label: player.powerLevels.pulse > 0 ? `Pulse Lv${player.powerLevels.pulse}` : "Pulse", ready: player.pulseCooldown <= 0, progress: 1 - Math.min(1, player.pulseCooldown / getPulseStats().cooldown), color: powerDefinitions.pulse.color },
     player.powers.beam ? { label: `Beam Lv${player.powerLevels.beam}`, ready: player.beamCooldown <= 0, progress: 1 - Math.min(1, player.beamCooldown / getBeamStats().cooldown), color: powerDefinitions.beam.color } : null,
     player.powers.burst ? { label: `Burst Lv${player.powerLevels.burst}`, ready: player.burstCooldown <= 0, progress: 1 - Math.min(1, player.burstCooldown / getBurstStats().cooldown), color: powerDefinitions.burst.color } : null,
   ].filter(Boolean);
@@ -1896,6 +1937,7 @@ window.__neonDriftDebug = {
   powerups,
   projectiles,
   beamEffects,
+  getPulseStats,
   getBeamStats,
   getBurstStats,
   getDroneStats,
